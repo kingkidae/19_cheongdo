@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Todo List</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 40px 16px;
+        background: #f3f4f6;
+        color: #1f2937;
+        font-family: "Malgun Gothic", system-ui, sans-serif;
+      }
+      main {
+        max-width: 520px;
+        margin: 0 auto;
+        padding: 24px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        margin: 0 0 16px;
+        font-size: 24px;
+      }
+      form {
+        display: flex;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+      }
+      input[type="text"] {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font: inherit;
+      }
+      button {
+        flex-shrink: 0;
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #fff;
+        font: inherit;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #f3f4f6;
+      }
+      button.primary {
+        border-color: #2563eb;
+        background: #2563eb;
+        color: #fff;
+      }
+      button.primary:hover {
+        background: #1d4ed8;
+      }
+      button.danger {
+        color: #dc2626;
+      }
+      ul {
+        margin: 16px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 0;
+        border-top: 1px solid #e5e7eb;
+      }
+      li input[type="checkbox"] {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+      }
+      .title {
+        flex: 1;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      li.done .title {
+        color: #9ca3af;
+        text-decoration: line-through;
+      }
+      #empty {
+        margin: 24px 0 8px;
+        color: #6b7280;
+        text-align: center;
+      }
+      #summary {
+        margin: 16px 0 0;
+        color: #6b7280;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Todo List</h1>
+
+      <form id="add-form">
+        <input
+          id="add-input"
+          type="text"
+          placeholder="할 일을 입력하세요"
+          aria-label="새 할 일"
+          autofocus
+        />
+        <button class="primary" type="submit">추가</button>
+      </form>
+
+      <ul id="list"></ul>
+      <p id="empty">등록된 할 일이 없습니다.</p>
+      <p id="summary"></p>
+    </main>
+
+    <script>
+      const STORAGE_KEY = "todos";
+
+      const addForm = document.getElementById("add-form");
+      const addInput = document.getElementById("add-input");
+      const list = document.getElementById("list");
+      const empty = document.getElementById("empty");
+      const summary = document.getElementById("summary");
+
+      let todos = loadTodos();
+      let editingId = null;
+
+      // ---------- localStorage ----------
+      function loadTodos() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          return Array.isArray(saved) ? saved : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveTodos() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+        } catch {
+          alert("저장에 실패했습니다. 브라우저의 저장소 설정을 확인하세요.");
+        }
+      }
+
+      // ---------- CRUD ----------
+      function createTodo(title) {
+        todos.push({
+          id: `${Date.now()}-${Math.random()}`,
+          title,
+          done: false,
+        });
+        commit();
+      }
+
+      function updateTodo(id, changes) {
+        todos = todos.map((todo) =>
+          todo.id === id ? { ...todo, ...changes } : todo,
+        );
+        commit();
+      }
+
+      function deleteTodo(id) {
+        todos = todos.filter((todo) => todo.id !== id);
+        commit();
+      }
+
+      function commit() {
+        saveTodos();
+        render();
+      }
+
+      // ---------- 화면 ----------
+      function button(label, action, className = "") {
+        const el = document.createElement("button");
+        el.type = "button";
+        el.textContent = label;
+        el.dataset.action = action;
+        el.className = className;
+        return el;
+      }
+
+      function renderTodo(todo) {
+        const li = document.createElement("li");
+        li.dataset.id = todo.id;
+
+        if (todo.id === editingId) {
+          const form = document.createElement("form");
+          form.className = "edit-form";
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = todo.title;
+          input.setAttribute("aria-label", "할 일 수정");
+
+          const save = document.createElement("button");
+          save.type = "submit";
+          save.className = "primary";
+          save.textContent = "저장";
+
+          form.append(input, save, button("취소", "cancel"));
+          li.append(form);
+          return li;
+        }
+
+        li.classList.toggle("done", todo.done);
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = todo.done;
+        checkbox.setAttribute("aria-label", "완료 표시");
+
+        const title = document.createElement("span");
+        title.className = "title";
+        title.textContent = todo.title; // textContent로 넣어 입력값이 HTML로 해석되지 않게 한다
+
+        li.append(
+          checkbox,
+          title,
+          button("수정", "edit"),
+          button("삭제", "delete", "danger"),
+        );
+        return li;
+      }
+
+      function render() {
+        list.replaceChildren(...todos.map(renderTodo));
+
+        const doneCount = todos.filter((todo) => todo.done).length;
+        empty.hidden = todos.length > 0;
+        summary.hidden = todos.length === 0;
+        summary.textContent = `전체 ${todos.length}개 · 완료 ${doneCount}개`;
+
+        const editInput = list.querySelector(".edit-form input");
+        if (editInput) {
+          editInput.focus();
+          editInput.select();
+        }
+      }
+
+      function stopEditing() {
+        editingId = null;
+        render();
+      }
+
+      // ---------- 이벤트 ----------
+      addForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const title = addInput.value.trim();
+        if (!title) return;
+        createTodo(title);
+        addForm.reset();
+        addInput.focus();
+      });
+
+      list.addEventListener("click", (event) => {
+        const action = event.target.dataset.action;
+        if (!action) return;
+        const id = event.target.closest("li").dataset.id;
+
+        if (action === "edit") {
+          editingId = id;
+          render();
+        } else if (action === "cancel") {
+          stopEditing();
+        } else if (action === "delete") {
+          if (editingId === id) editingId = null;
+          deleteTodo(id);
+        }
+      });
+
+      list.addEventListener("change", (event) => {
+        if (event.target.type !== "checkbox") return;
+        updateTodo(event.target.closest("li").dataset.id, {
+          done: event.target.checked,
+        });
+      });
+
+      list.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const title = event.target.querySelector("input").value.trim();
+        if (!title) return;
+        const id = event.target.closest("li").dataset.id;
+        editingId = null;
+        updateTodo(id, { title });
+      });
+
+      list.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && editingId) stopEditing();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
