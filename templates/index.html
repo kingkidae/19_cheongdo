@@ -5,27 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Todo List</title>
     <style>
+      :root {
+        --bg: #f6efe4;
+        --card: #fffaf3;
+        --line: #eadfce;
+        --text: #3a2b22;
+        --muted: #8f7c6c;
+        --accent: #c0562a;
+        --accent-hover: #a54620;
+        --accent-soft: #f6e2d3;
+        --olive: #6f7d3c;
+        --danger: #a8402f;
+      }
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
-        padding: 40px 16px;
-        background: #f3f4f6;
-        color: #1f2937;
-        font-family: "Malgun Gothic", system-ui, sans-serif;
+        min-height: 100vh;
+        padding: 64px 16px;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          "Pretendard", "Malgun Gothic", system-ui, -apple-system, sans-serif;
+        line-height: 1.5;
       }
       main {
-        max-width: 520px;
+        max-width: 480px;
         margin: 0 auto;
-        padding: 24px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        padding: 32px 28px 24px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: 0 12px 32px -16px rgba(94, 56, 30, 0.25);
+      }
+      .eyebrow {
+        margin: 0 0 4px;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
       }
       h1 {
-        margin: 0 0 16px;
-        font-size: 24px;
+        margin: 0 0 24px;
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
       }
       form {
         display: flex;
@@ -36,51 +62,119 @@
       input[type="text"] {
         flex: 1;
         min-width: 0;
-        padding: 8px 10px;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
+        padding: 11px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        color: inherit;
         font: inherit;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      input[type="text"]::placeholder {
+        color: #b9a898;
+      }
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
       }
       button {
         flex-shrink: 0;
         padding: 8px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        background: #fff;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--muted);
         font: inherit;
-        font-size: 14px;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
       }
       button:hover {
-        background: #f3f4f6;
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
       button.primary {
-        border-color: #2563eb;
-        background: #2563eb;
+        padding: 11px 18px;
+        background: var(--accent);
         color: #fff;
+        font-size: 14px;
       }
       button.primary:hover {
-        background: #1d4ed8;
+        background: var(--accent-hover);
+        color: #fff;
       }
-      button.danger {
-        color: #dc2626;
+      button.danger:hover {
+        background: #f6dcd6;
+        color: var(--danger);
       }
       ul {
-        margin: 16px 0 0;
+        margin: 20px 0 0;
         padding: 0;
         list-style: none;
       }
       li {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 0;
-        border-top: 1px solid #e5e7eb;
+        gap: 12px;
+        padding: 12px 4px;
+        border-top: 1px solid var(--line);
+      }
+      li button {
+        opacity: 0;
+        transition:
+          opacity 0.15s,
+          background 0.15s,
+          color 0.15s;
+      }
+      li:hover button,
+      li:focus-within button,
+      li .edit-form button {
+        opacity: 1;
+      }
+      @media (hover: none) {
+        li button {
+          opacity: 1;
+        }
+      }
+      .edit-form {
+        padding: 0;
       }
       li input[type="checkbox"] {
+        appearance: none;
         flex-shrink: 0;
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
+        margin: 0;
+        border: 2px solid #d3bfa8;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      li input[type="checkbox"]:hover {
+        border-color: var(--olive);
+      }
+      li input[type="checkbox"]:checked {
+        border-color: var(--olive);
+        background: var(--olive)
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-6.5'/%3E%3C/svg%3E")
+          center / 14px no-repeat;
+      }
+      li input[type="checkbox"]:focus-visible {
+        outline: 2px solid var(--olive);
+        outline-offset: 2px;
       }
       .title {
         flex: 1;
@@ -88,24 +182,28 @@
         overflow-wrap: anywhere;
       }
       li.done .title {
-        color: #9ca3af;
+        color: var(--muted);
         text-decoration: line-through;
+        text-decoration-color: #cdb9a4;
       }
       #empty {
-        margin: 24px 0 8px;
-        color: #6b7280;
+        margin: 32px 0 12px;
+        color: var(--muted);
         text-align: center;
       }
       #summary {
-        margin: 16px 0 0;
-        color: #6b7280;
-        font-size: 14px;
+        margin: 12px 0 0;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
       }
     </style>
   </head>
   <body>
     <main>
-      <h1>Todo List</h1>
+      <p class="eyebrow">Autumn Tasks</p>
+      <h1>오늘의 할 일</h1>
 
       <form id="add-form">
         <input
